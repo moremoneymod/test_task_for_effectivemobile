@@ -136,11 +136,8 @@ class BookManager:
         book_data = {"status_code": 404}
         for data_tuple in list(books.items())[1:]:
             if data_tuple[1][f"{search_filter}"] == search_filter_data:
-                if data_tuple[0] not in book_data:
-                    book_data[data_tuple[0]] = []
-                book_data[data_tuple[0]].append(data_tuple[1])
+                book_data.update({data_tuple[0]: data_tuple[1]})
                 book_data["status_code"] = 200
-                break
 
         print(book_data)
         return book_data
