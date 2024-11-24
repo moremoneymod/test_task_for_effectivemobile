@@ -37,7 +37,8 @@ class ConsoleManager:
                 self._delete_book()
 
     def _show_all_books(self) -> None:
-        books = self.book_manager._create_book_str_view()
+        books = self.book_manager.read_books()
+        books = self.book_manager._create_books_str_view(books)
         print()
         if books["status_code"] == 404:
             print("Ошибка:\nВ библиотеке пока нет книг")
@@ -185,6 +186,49 @@ class ConsoleManager:
                 print("Ошибка:\nВозникли проблемы при чтении файла")
             else:
                 print("!!!", try_search)
+                books = self.book_manager._create_books_str_view(try_search)
+                for book in list(books.values())[1:]:
+                    print(book + "\n")
+
+        elif search_type == 2:
+            author = input("Введите автора книги: ")
+            if len(author) == 0:
+                print("У книги должен быть автор")
+                while len(author) == 0:
+                    author = input("Укажите автора книги: ")
+                    if len(author) == 0:
+                        print("У книги должен быть автор")
+            try_search = self.book_manager.search_book_by_author(author=author)
+            if try_search["status_code"] == 404:
+                print("Ошибка:\nКнига с таким автором не найдена")
+            elif try_search["status_code"] == 500:
+                print("Ошибка:\nВозникли проблемы при чтении файла")
+            else:
+                print("!!!", try_search)
+                books = self.book_manager._create_books_str_view(try_search)
+                for book in list(books.values())[1:]:
+                    print(book + "\n")
+
+        elif search_type == 3:
+            year = input("Введите год издания книги: ")
+            if len(year) == 0:
+                print("У книги должен быть год издания")
+                while len(year) == 0:
+                    year = input("Укажите год издания книги: ")
+                    if len(year) == 0:
+                        print("У книги должен быть год издания")
+            year = int(year)
+            try_search = self.book_manager.search_book_by_year(year=year)
+            if try_search["status_code"] == 404:
+                print("Ошибка:\nКнига с таким годом издания не найдена")
+            elif try_search["status_code"] == 500:
+                print("Ошибка:\nВозникли проблемы при чтении файла")
+            else:
+                print("!!!", try_search)
+                books = self.book_manager._create_books_str_view(try_search)
+                for book in list(books.values())[1:]:
+                    print(book + "\n")
+
         self.main_menu()
 
     @staticmethod
