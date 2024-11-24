@@ -68,7 +68,7 @@ class BookManager:
         except Exception as e:
             return {"status_code": 500}
 
-    def add_book(self, title: str, author: str, year: int, status: str) -> dict:
+    def add_book(self, title: str, author: str, year: int) -> dict:
         """
         Метод, отвечающий за добавление новой книги
         Является промежуточным звеном между двумя другими методами: методом для создания новой книги и
@@ -77,10 +77,9 @@ class BookManager:
         :param title: название книги
         :param author: автор книги
         :param year: год издания книги
-        :param status: статус книги
         :return: словарь со статус-кодом операции
         """
-        new_book = self._create_book(title, author, year, status)
+        new_book = self._create_book(title, author, year, "в наличии")
         try_add = self._add_book_to_json(new_book)
         print(try_add)
         return try_add
@@ -137,7 +136,9 @@ class BookManager:
         book_data = {"status_code": 404}
         for data_tuple in list(books.items())[1:]:
             if data_tuple[1][f"{search_filter}"] == search_filter_data:
-                book_data.update({data_tuple[0]: data_tuple[1]})
+                if data_tuple[0] not in book_data:
+                    book_data[data_tuple[0]] = []
+                book_data[data_tuple[0]].append(data_tuple[1])
                 book_data["status_code"] = 200
                 break
 
@@ -272,3 +273,38 @@ class BookManager:
             book["status"] = new_status
             change_try = self._update_book(book_id, book)
         return change_try
+
+    def _create_book_str_view(self) -> dict:
+        """
+        Метод, отвечающий за преобразование словаря книги в строковый вид.
+        Принимает на вход словарь книг, затем преобразует каждую книгу в строковое представление.
+        Записывает новое представление в словарь по ключу в виде идентификатора книги
+        В случае успеха возвращает словарь со статус-кодом 200
+        Если файл с книгами пустой - возвращает словарь со статус-кодом 404
+        Если возникли проблемы с чтением книг из файла - возвращает словарь со статус-кодом 500
+
+        :return: словарь с представлением книг в виде строк
+        """
+        books = self.read_books()
+        books_views = dict()
+        books_views["status_code"] = 200
+        if books["status_code"] != 200:
+            books_views["status_code"] = books["status_code"]
+        for book_id, book_data in list(books.items())[1:]:
+            print(book_id, book_data)
+            books_views[
+                book_id] = (f"\tИдентификатор книги: {book_id}\n\tНазвание: {book_data["title"]}"
+                            f"\n\tАвтор: {book_data["author"]}\n\tГод издания: {book_data["year"]}\n\tСтатус книги: {book_data["status"]}")
+            print(books_views)
+        return books_views
+
+    def _check_book_exists(self, book_id: int) -> dict:
+        books = self.read_books()
+        check_book = {"status_code": 404}
+        if books["status_code"] != 200:
+            check_book["status_code"] = books["status_code"]
+        else:
+            if str(book_id) in books:
+                check_book["status_code"] = 200
+
+        return check_book
