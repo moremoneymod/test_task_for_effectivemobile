@@ -3,8 +3,9 @@ from src.classes.book import Book
 
 
 class BookManager:
-    """Класс, отвечающий за менеджер для работы с книгами
-    Содержит методы для чтения книг из файла, запись книг в файл, поиск по разным фильтрам и тд"""
+    """
+    Класс, отвечающий за работу с книгами - чтение, запись, создание, поиск, обновление
+    """
 
     def __init__(self, file_link: str) -> None:
         """
@@ -254,6 +255,15 @@ class BookManager:
         return try_update
 
     def change_book_status(self, book_id: int, new_status: str) -> dict:
+        """
+        Метод, отвечающий за изменение статуса книги.
+        Функция получает книгу по идентификатору в виде словаря и изменяет статус,
+        затем используется метод обновления книги для внесения книги с новым статусом в файл books.json
+
+        :param book_id: идентификатор книги для изменения статуса
+        :param new_status: новый статус книги
+        :return: словарь со статус-кодом операции
+        """
         book = self._search_book_by_id(book_id)
         change_try = {"status_code": 200}
         if book["status_code"] != 200:
