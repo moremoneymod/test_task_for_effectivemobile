@@ -14,9 +14,10 @@ class BookManager:
         :param file_link: путь к файлу books.json
         """
         self.file_link = file_link
+        with open(self.file_link, 'w', encoding="utf-8") as f:
+            pass
 
-    @staticmethod
-    def read_books() -> dict:
+    def read_books(self) -> dict:
         """
         Метод, отвечающий за считывание всех книг из файла
         Если файл пустой - возвращает словарь со статус-кодом 404
@@ -25,7 +26,7 @@ class BookManager:
 
         :return: словарь со всеми книгами и статус-кодом
         """
-        with open("./books.json", encoding="utf-8") as f:
+        with open(self.file_link, encoding="utf-8") as f:
             try:
                 data = {"status_code": 200}
                 data.update(json.load(f))
@@ -48,8 +49,7 @@ class BookManager:
         else:
             return len(data.keys())
 
-    @staticmethod
-    def _write_books(books: dict) -> dict:
+    def _write_books(self, books: dict) -> dict:
         """
         Метод, отвечающий за запись всех книг в файл books.json
         Получает на вход словарь и, преобразовав его в json, записывает в файл
@@ -60,7 +60,7 @@ class BookManager:
         :return: словарь со статус-кодом операции
         """
         try:
-            with open("./books.json", 'w', encoding="utf-8") as f:
+            with open(self.file_link, 'w', encoding="utf-8") as f:
                 f.write(json.dumps(books, ensure_ascii=False))
             return {"status_code": 200}
         except Exception as e:
@@ -77,9 +77,12 @@ class BookManager:
         :param year: год издания книги
         :return: словарь со статус-кодом операции
         """
-        new_book = self._create_book(title=title, author=author, year=year, status="в наличии")
-        try_add = self._add_book_to_json(new_book)
-        return try_add
+        if not title or not author or not str(year).isdigit():
+            return {"status_code": 500}
+        else:
+            new_book = self._create_book(title=title, author=author, year=year, status="в наличии")
+            try_add = self._add_book_to_json(new_book)
+            return try_add
 
     def _create_book(self, title: str, author: str, year: int, status: str) -> Book:
         """
@@ -132,9 +135,10 @@ class BookManager:
             return books
         book_data = {"status_code": 404}
         for data_tuple in list(books.items())[1:]:
-            if data_tuple[1][f"{search_filter}"] == search_filter_data:
-                book_data.update({data_tuple[0]: data_tuple[1]})
-                book_data["status_code"] = 200
+            if search_filter in data_tuple[1]:
+                if data_tuple[1][f"{search_filter}"] == search_filter_data:
+                    book_data.update({data_tuple[0]: data_tuple[1]})
+                    book_data["status_code"] = 200
 
         return book_data
 
@@ -238,10 +242,13 @@ class BookManager:
         if books["status_code"] != 200:
             try_update["status_code"] = books["status_code"]
         else:
-            books[str(book_id)] = new_book
-            try_write = self._write_books(books)
-            if try_write != 200:
-                try_update["status_code"] = try_write["status_code"]
+            if self.check_book_exists(book_id=book_id):
+                books[str(book_id)] = new_book
+                try_write = self._write_books(books)
+                if try_write != 200:
+                    try_update["status_code"] = try_write["status_code"]
+            else:
+                try_update["status_code"] = 404
 
         return try_update
 
