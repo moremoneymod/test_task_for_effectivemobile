@@ -1,10 +1,10 @@
 import unittest
-from .classes.book_manager import BookManager
+from src.classes.book_manager import BookManager
 
 
 class Test(unittest.TestCase):
     def setUp(self):
-        self.book_manager = BookManager("src/books.json")
+        self.book_manager = BookManager("./books.json")
 
     # тесты на успешное добавление книги
     def test_add_book(self):
