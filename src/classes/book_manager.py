@@ -1,5 +1,5 @@
 import json
-from src.classes.book import Book
+from .book import Book
 
 
 class BookManager:
@@ -33,7 +33,6 @@ class BookManager:
                 data = {"status_code": 404}
             except Exception as e:
                 data = {"status_code": 500}
-        print(data)
         return data
 
     def _create_book_id(self) -> int:
@@ -47,7 +46,6 @@ class BookManager:
         if data["status_code"] == 404 or data["status_code"] == 500:
             return 1
         else:
-            print(len(data.keys()))
             return len(data.keys())
 
     @staticmethod
@@ -79,9 +77,8 @@ class BookManager:
         :param year: год издания книги
         :return: словарь со статус-кодом операции
         """
-        new_book = self._create_book(title, author, year, "в наличии")
+        new_book = self._create_book(title=title, author=author, year=year, status="в наличии")
         try_add = self._add_book_to_json(new_book)
-        print(try_add)
         return try_add
 
     def _create_book(self, title: str, author: str, year: int, status: str) -> Book:
@@ -139,7 +136,6 @@ class BookManager:
                 book_data.update({data_tuple[0]: data_tuple[1]})
                 book_data["status_code"] = 200
 
-        print(book_data)
         return book_data
 
     def search_book_by_title(self, title: str) -> dict:
@@ -153,8 +149,7 @@ class BookManager:
         :param title: заголовок книги
         :return: словарь с найденной книгой и статус-кодом
         """
-        search_data = self._search_book("title", title)
-        print(search_data)
+        search_data = self._search_book(search_filter="title", search_filter_data=title)
         return search_data
 
     def search_book_by_author(self, author: str) -> dict:
@@ -168,8 +163,7 @@ class BookManager:
         :param author: автор книги
         :return: словарь с найденной книгой и статус-кодом
         """
-        search_data = self._search_book("author", author)
-        print(search_data)
+        search_data = self._search_book(search_filter="author", search_filter_data=author)
         return search_data
 
     def search_book_by_year(self, year: int) -> dict:
@@ -183,8 +177,7 @@ class BookManager:
         :param year: год издания книги
         :return: словарь с найденной книгой и статус-кодом
         """
-        search_data = self._search_book("year", year)
-        print(search_data)
+        search_data = self._search_book(search_filter="year", search_filter_data=year)
         return search_data
 
     def _search_book_by_id(self, book_id) -> dict:
@@ -201,7 +194,7 @@ class BookManager:
         books = self.read_books()
         book_data = {"status_code": 404}
         if books["status_code"] == 200:
-            if str(book_id) in books:
+            if self.check_book_exists(book_id):
                 book_data.update(books[str(book_id)])
                 book_data["status_code"] = 200
         else:
@@ -230,7 +223,7 @@ class BookManager:
         else:
             return {"status_code": 404}
 
-    def _update_book(self, book_id: int, new_book: dict) -> dict:
+    def update_book(self, book_id: int, new_book: dict) -> dict:
         """
         Метод для обновления книги в файле books.json. Принимает на вход идентификатор и обновленную книгу.
         Считывает все книги из файла в словарь, используя метод для чтения, затем обновляет словарь
@@ -268,10 +261,11 @@ class BookManager:
             change_try["status_code"] = book["status_code"]
         else:
             book["status"] = new_status
-            change_try = self._update_book(book_id, book)
+            change_try = self.update_book(book_id, book)
         return change_try
 
-    def _create_book_str_view(self) -> dict:
+    @staticmethod
+    def create_books_str_view(books: dict) -> dict:
         """
         Метод, отвечающий за преобразование словаря книги в строковый вид.
         Принимает на вход словарь книг, затем преобразует каждую книгу в строковое представление.
@@ -282,20 +276,27 @@ class BookManager:
 
         :return: словарь с представлением книг в виде строк
         """
-        books = self.read_books()
         books_views = dict()
         books_views["status_code"] = 200
         if books["status_code"] != 200:
             books_views["status_code"] = books["status_code"]
         for book_id, book_data in list(books.items())[1:]:
-            print(book_id, book_data)
             books_views[
                 book_id] = (f"\tИдентификатор книги: {book_id}\n\tНазвание: {book_data["title"]}"
-                            f"\n\tАвтор: {book_data["author"]}\n\tГод издания: {book_data["year"]}\n\tСтатус книги: {book_data["status"]}")
-            print(books_views)
+                            f"\n\tАвтор: {book_data["author"]}\n\tГод издания: {book_data["year"]}"
+                            f"\n\tСтатус книги: {book_data["status"]}")
         return books_views
 
-    def _check_book_exists(self, book_id: int) -> dict:
+    def check_book_exists(self, book_id: int) -> dict:
+        """
+        Метод для проверки существования книги.
+        Считывает все книги из файла в словарь и проверяет, содержится ли в нем книга с переданным идентификатором.
+        Если книга найдена - возвращает словарь со статус-кодом 200.
+        Если книга не найдена или ошибка при чтении файла - словарь со статус-кодом 404 или 500
+
+        :param book_id: идентификатор книги, существование которой требуется проверить
+        :return: словарь со статус-кодом
+        """
         books = self.read_books()
         check_book = {"status_code": 404}
         if books["status_code"] != 200:
